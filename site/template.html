@@ -5,11 +5,19 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Dino Template (A4)</title>
   <style>
-    body{ margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans KR", sans-serif; background:#0b1222; color:#fff; }
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans KR", sans-serif;
+      background:#0b1222; color:#fff;
+    }
     .wrap{ max-width: 980px; margin: 0 auto; padding: 14px; }
-    .panel{ border:1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.05); border-radius:16px; padding:12px; }
+    .panel{
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.05);
+      border-radius:16px; padding:12px;
+    }
     .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:10px; }
-    button, select{
+    button, select, input{
       border:0; border-radius:12px; padding:10px 12px; font-weight:800;
       background: rgba(255,255,255,.14); color:#fff;
     }
@@ -38,15 +46,20 @@
     <div class="panel">
       <div style="font-size:18px; font-weight:900;">A4 템플릿 생성</div>
       <div class="hint">
-        이 페이지를 A4로 인쇄한 뒤, 아이가 프레임 안에 그림을 그리세요.<br/>
-        네 모서리 마커(검정 네모)는 절대 색칠하지 마세요. (추적용)
+        1) 아래에서 “티라노사우루스(예시)” 선택 → 2) 인쇄(A4, 배율 100%) → 3) 아이가 선을 따라 색칠/그리기.<br/>
+        네 모서리 마커(검정 네모)는 절대 색칠하지 마세요. (카메라 추적용)
       </div>
 
       <div class="row">
-        <label>종 선택:</label>
+        <label>템플릿:</label>
         <select id="species">
-          <option value="free">자유그림</option>
+          <option value="free">자유그림(프레임만)</option>
+          <option value="trex">티라노사우루스(예시)</option>
         </select>
+
+        <label>가이드 진하기:</label>
+        <input id="opacity" type="range" min="0" max="100" value="22" />
+
         <button class="primary" id="btnPrint">인쇄하기</button>
         <a href="./index.html" style="color:#9fd0ff; font-weight:800; text-decoration:none;">카메라로 스캔하러 가기</a>
       </div>
