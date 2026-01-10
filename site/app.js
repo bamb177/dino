@@ -200,14 +200,20 @@ function biggestComponent(binMask){
   return { comp, bbox: {x,y,w,h, area: bestArea} };
 }
 
-  async function captureAndCutout(){
+async function captureAndCutout(){
+  try{
     if(!video.videoWidth){
       meta.textContent = "카메라가 준비되지 않았습니다.";
       return;
+        }catch(e){
+        meta.textContent = "에러: " + (e && e.message ? e.message : e);
+      }
     }
-  
-    meta.textContent = "처리 중...";
-  
+    }
+
+    meta.textContent = "처리 중... (캡처)";
+    // 아래 기존 코드 계속…
+
     const capCanvas = document.createElement("canvas");
     if(!drawVideoToCanvas(capCanvas)){
       meta.textContent = "캡처 실패";
@@ -264,20 +270,19 @@ function biggestComponent(binMask){
   const compCrop = comp.roi(new cv.Rect(cx, cy, cw, ch));
   const roiCrop = roi.roi(new cv.Rect(cx, cy, cw, ch));
 
-  // RGBA: roiCrop 색 + compCrop alpha
+   // 결과 RGBA: 배경은 투명, 공룡만 남기기(빠른 방식)
   const out = new cv.Mat(roiCrop.rows, roiCrop.cols, cv.CV_8UC4);
-  for(let y=0;y<roiCrop.rows;y++){
-    for(let x=0;x<roiCrop.cols;x++){
-      const a = compCrop.ucharPtr(y,x)[0];
-      const px = roiCrop.ucharPtr(y,x); // RGBA
-      const op = out.ucharPtr(y,x);
-      if(a){
-        op[0]=px[0]; op[1]=px[1]; op[2]=px[2]; op[3]=255;
-      }else{
-        op[0]=0; op[1]=0; op[2]=0; op[3]=0;
-      }
-    }
-  }
+  out.setTo(new cv.Scalar(0,0,0,0));       // 완전 투명으로 초기화
+  roiCrop.copyTo(out, compCrop);           // 마스크 영역만 복사 (RGB + A)
+  
+  // alpha 채널을 compCrop으로 고정(더 확실)
+  const ch = new cv.MatVector();
+  cv.split(out, ch);
+  ch.set(3, compCrop.clone());             // alpha = mask
+  cv.merge(ch, out);
+  ch.get(0).delete(); ch.get(1).delete(); ch.get(2).delete(); ch.get(3).delete();
+  ch.delete();
+  
 
   // 6) 화면에 표시
   outCanvas.width = out.cols;
