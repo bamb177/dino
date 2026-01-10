@@ -13,6 +13,19 @@ let lastPngDataUrl = null;
 
 function setStatus(s){ cvStatus.textContent = s; }
 
+// OpenCV가 준비되면 index.html의 Module.onRuntimeInitialized가 이 함수를 호출합니다.
+window.onOpenCvReady = function(){
+  setStatus("OpenCV 준비 완료. 카메라 시작을 눌러주세요.");
+};
+
+// 혹시 app.js가 늦게 로드되어도(이미 OpenCV 준비 완료된 상태) 즉시 반영
+if (window.__opencv_ready) {
+  window.onOpenCvReady();
+} else {
+  setStatus("OpenCV 로딩 중... (WASM 다운로드 중)");
+}
+
+
 function waitForCVReady(){
   return new Promise((resolve) => {
     const timer = setInterval(() => {
@@ -417,10 +430,7 @@ function downloadPng(){
   a.remove();
 }
 
-(async function init(){
-  await waitForCVReady();
-  setStatus("OpenCV 준비 완료. 카메라 시작을 눌러주세요.");
-})();
+
 
 btnStart.addEventListener("click", startCamera);
 btnCapture.addEventListener("click", captureAndCutout);
