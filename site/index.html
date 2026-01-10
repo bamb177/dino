@@ -48,8 +48,19 @@
     </section>
   </main>
 
-  <!-- OpenCV.js: CDN -->
-  <script src="https://docs.opencv.org/4.x/opencv.js" type="text/javascript"></script>
+  <script>
+    // OpenCV 로딩 완료 신호를 확실히 받기 위한 설정
+    window.__opencv_ready = false;
+    var Module = {
+      locateFile: function(path){ return "https://docs.opencv.org/4.8.0/" + path; },
+      onRuntimeInitialized: function(){
+        window.__opencv_ready = true;
+        if (window.onOpenCvReady) window.onOpenCvReady();
+      }
+    };
+  </script>
+  <script src="https://docs.opencv.org/4.8.0/opencv.js" type="text/javascript"></script>
   <script src="./app.js"></script>
+
 </body>
 </html>
