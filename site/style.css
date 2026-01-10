@@ -80,6 +80,7 @@ button{
   font-weight: 800;
 }
 button.primary{ background: var(--btnP); }
+button:disabled{ opacity: .45; cursor:not-allowed; }
 
 .tips{
   margin-top: 10px;
