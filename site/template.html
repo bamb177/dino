@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Dino Template (A4)</title>
+  <style>
+    body{ margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans KR", sans-serif; background:#0b1222; color:#fff; }
+    .wrap{ max-width: 980px; margin: 0 auto; padding: 14px; }
+    .panel{ border:1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.05); border-radius:16px; padding:12px; }
+    .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:10px; }
+    button, select{
+      border:0; border-radius:12px; padding:10px 12px; font-weight:800;
+      background: rgba(255,255,255,.14); color:#fff;
+    }
+    button.primary{ background: rgba(80,160,255,.35); cursor:pointer; }
+    .hint{ font-size:13px; opacity:.85; line-height:1.45; margin-top:10px; }
+
+    /* A4 print area */
+    .paper{
+      margin-top:12px;
+      background:#fff;
+      border-radius: 8px;
+      overflow:hidden;
+      padding: 10px;
+      color:#000;
+    }
+
+    /* Print: A4 exact layout */
+    @media print{
+      body{ background:#fff; }
+      .wrap{ max-width: none; padding:0; }
+      .panel{ display:none; }
+      .paper{ margin:0; border-radius:0; padding:0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="panel">
+      <div style="font-size:18px; font-weight:900;">A4 도안 템플릿 생성</div>
+      <div class="hint">
+        이 페이지에서 A4 템플릿을 출력한 뒤, 아이가 프레임 안에 그림을 그리세요.<br/>
+        네 모서리 마커는 절대 색칠하지 마세요. (카메라 추적용)
+      </div>
+
+      <div class="row">
+        <label>종 선택:</label>
+        <select id="species">
+          <option value="ptera">프테라노돈</option>
+          <option value="trex">티라노사우루스</option>
+          <option value="free">자유그림(종 미지정)</option>
+        </select>
+        <button class="primary" id="btnPrint">인쇄하기</button>
+        <a href="./index.html" style="color:#9fd0ff; font-weight:800; text-decoration:none;">카메라로 스캔하러 가기</a>
+      </div>
+    </div>
+
+    <div class="paper">
+      <canvas id="tpl" width="2480" height="3508" style="width:100%; height:auto;"></canvas>
+    </div>
+  </div>
+
+  <script src="./template.js"></script>
+</body>
+</html>
