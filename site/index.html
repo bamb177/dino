@@ -31,7 +31,7 @@
       </div>
 
       <div class="tips">
-        중요: 템플릿의 네 모서리 마커 4개가 화면에 모두 보이게 촬영하세요. 마커가 흐리면 인식이 실패합니다.
+        중요: 템플릿의 네 모서리 마커 4개가 화면에 모두 보이게 촬영하세요.
       </div>
 
       <div id="log" class="status" style="margin-top:10px;"></div>
@@ -50,8 +50,8 @@
     </section>
   </main>
 
-  <!-- OpenCV.js -->
-  <script async src="https://docs.opencv.org/4.x/opencv.js" type="text/javascript"></script>
-  <script src="./app.js"></script>
+  <!-- 순서 보장: async 제거 -->
+  <script src="https://docs.opencv.org/4.x/opencv.js" type="text/javascript"></script>
+  <script defer src="./app.js"></script>
 </body>
 </html>
