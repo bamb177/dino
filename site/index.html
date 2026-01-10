@@ -53,6 +53,7 @@
     window.__opencv_ready = false;
     var Module = {
       locateFile: function(path){ return "https://docs.opencv.org/4.8.0/" + path; },
+      window.addEventListener("error", (e) => { console.log("JS Error:", e.message); });
       onRuntimeInitialized: function(){
         window.__opencv_ready = true;
         if (window.onOpenCvReady) window.onOpenCvReady();
