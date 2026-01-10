@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Dino AR Cutout (DeX)</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <header class="top">
+    <div class="title">Dino AR Cutout</div>
+    <div class="sub">휴대폰 카메라로 도안을 비추면, 공룡만 추출(투명 PNG)합니다. DeX로 TV에 그대로 출력.</div>
+  </header>
+
+  <main class="wrap">
+    <section class="card">
+      <div class="card-h">
+        <div class="h">카메라</div>
+        <div id="cvStatus" class="status">OpenCV 로딩 중...</div>
+      </div>
+
+      <video id="video" playsinline autoplay muted></video>
+
+      <div class="btns">
+        <button id="btnStart" class="primary">카메라 시작</button>
+        <button id="btnCapture">캡처 & 공룡 추출</button>
+        <button id="btnDownload">PNG 다운로드</button>
+      </div>
+
+      <div class="tips">
+        팁: 도안을 화면 중앙에 크게, QR이 보이게 맞추고 촬영하세요. 강한 그림자는 피하세요.
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-h">
+        <div class="h">결과</div>
+        <div id="meta" class="status"></div>
+      </div>
+
+      <canvas id="outCanvas" width="960" height="540"></canvas>
+      <div class="preview">
+        <img id="outImg" alt="result png" />
+      </div>
+    </section>
+  </main>
+
+  <!-- OpenCV.js: CDN -->
+  <script async src="https://docs.opencv.org/4.x/opencv.js" type="text/javascript"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
