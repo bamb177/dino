@@ -187,4 +187,236 @@ function warpToA4(rgbaMat){
 
   const dstPts = [
     PAD + M/2, PAD + M/2,
-    OUT_W - PAD -_
+    OUT_W - PAD - M/2, PAD + M/2,
+    OUT_W - PAD - M/2, OUT_H - PAD - M/2,
+    PAD + M/2, OUT_H - PAD - M/2
+  ];
+
+  const src = cv.matFromArray(4,1,cv.CV_32FC2, srcPts);
+  const dst = cv.matFromArray(4,1,cv.CV_32FC2, dstPts);
+  const Hm = cv.getPerspectiveTransform(src, dst);
+
+  const warped = new cv.Mat();
+  cv.warpPerspective(rgbaMat, warped, Hm, new cv.Size(OUT_W, OUT_H), cv.INTER_LINEAR, cv.BORDER_REPLICATE);
+
+  src.delete(); dst.delete(); Hm.delete();
+  return warped;
+}
+
+function labInkMask(roiRGBA){
+  const lab = new cv.Mat();
+  cv.cvtColor(roiRGBA, lab, cv.COLOR_RGBA2Lab);
+
+  const mv = new cv.MatVector();
+  cv.split(lab, mv);
+  const L = mv.get(0);
+  const A = mv.get(1);
+  const B = mv.get(2);
+
+  const Ld = L.data, Ad = A.data, Bd = B.data;
+
+  const paperL = [], paperA = [], paperB = [];
+  for(let i=0;i<Ld.length;i++){
+    const l = Ld[i], a = Ad[i], b = Bd[i];
+    const chroma = Math.hypot(a-128, b-128);
+    if(chroma < 12 && l > 155){
+      paperL.push(l); paperA.push(a); paperB.push(b);
+    }
+  }
+  function median(arr){
+    if(arr.length === 0) return 0;
+    const s = arr.slice().sort((x,y)=>x-y);
+    return s[Math.floor(s.length/2)];
+  }
+  const L0 = paperL.length ? median(paperL) : 200;
+  const A0 = paperA.length ? median(paperA) : 128;
+  const B0 = paperB.length ? median(paperB) : 128;
+
+  const mask = new cv.Mat(lab.rows, lab.cols, cv.CV_8UC1);
+  const md = mask.data;
+
+  for(let i=0;i<Ld.length;i++){
+    const l = Ld[i], a = Ad[i], b = Bd[i];
+    const dist = Math.hypot(a-A0, b-B0) + 0.25*Math.abs(l-L0);
+    const ink = (dist > 18) || (l < 70);
+    md[i] = ink ? 255 : 0;
+  }
+
+  const k = cv.getStructuringElement(cv.MORPH_ELLIPSE, new cv.Size(5,5));
+  cv.morphologyEx(mask, mask, cv.MORPH_OPEN, k);
+  cv.morphologyEx(mask, mask, cv.MORPH_CLOSE, k);
+
+  k.delete();
+  lab.delete();
+  mv.delete();
+  L.delete(); A.delete(); B.delete();
+
+  return mask;
+}
+
+function biggestComponent(binMask){
+  const labels = new cv.Mat();
+  const stats = new cv.Mat();
+  const centroids = new cv.Mat();
+
+  const n = cv.connectedComponentsWithStats(binMask, labels, stats, centroids, 8, cv.CV_32S);
+  if(n <= 1){
+    labels.delete(); stats.delete(); centroids.delete();
+    return null;
+  }
+
+  let best = 1;
+  let bestArea = stats.intAt(1, cv.CC_STAT_AREA);
+  for(let i=2;i<n;i++){
+    const area = stats.intAt(i, cv.CC_STAT_AREA);
+    if(area > bestArea){ bestArea=area; best=i; }
+  }
+
+  const bestMat = new cv.Mat(labels.rows, labels.cols, labels.type(), new cv.Scalar(best));
+  const comp = new cv.Mat();
+  cv.compare(labels, bestMat, comp, cv.CMP_EQ);
+  bestMat.delete();
+
+  const x = stats.intAt(best, cv.CC_STAT_LEFT);
+  const y = stats.intAt(best, cv.CC_STAT_TOP);
+  const w = stats.intAt(best, cv.CC_STAT_WIDTH);
+  const h = stats.intAt(best, cv.CC_STAT_HEIGHT);
+
+  labels.delete(); stats.delete(); centroids.delete();
+  return { comp, bbox:{x,y,w,h,area:bestArea} };
+}
+
+async function captureAndCutout(){
+  try{
+    btnCapture.disabled = true;
+    btnDownload.disabled = true;
+    lastPngDataUrl = null;
+    meta.textContent = "";
+
+    const frameCanvas = captureFrameToCanvas(960);
+    if(!frameCanvas){
+      meta.textContent = "카메라가 준비되지 않았습니다.";
+      btnCapture.disabled = false;
+      return;
+    }
+
+    meta.textContent = "처리중... (마커 인식/투시보정)";
+    const cap = cv.imread(frameCanvas); // RGBA
+
+    const warped = warpToA4(cap);
+    if(!warped){
+      meta.textContent = "마커 4개 인식 실패. (모서리 마커 4개가 모두 화면에 보이게 촬영)";
+      cap.delete();
+      btnCapture.disabled = false;
+      return;
+    }
+
+    // 프레임 내부 ROI로 제한(마커/텍스트 영향 최소화)
+    const OUT_W = warped.cols, OUT_H = warped.rows;
+    const PAD = 70, M = 120, FRAME_PAD = 160;
+
+    const x0 = Math.max(0, PAD + M + FRAME_PAD);
+    const y0 = Math.max(0, PAD + FRAME_PAD);
+    const x1 = Math.min(OUT_W, OUT_W - PAD - M - FRAME_PAD);
+    const y1 = Math.min(OUT_H, OUT_H - PAD - FRAME_PAD);
+
+    const roiRect = new cv.Rect(x0, y0, Math.max(1, x1-x0), Math.max(1, y1-y0));
+    const roi = warped.roi(roiRect);
+
+    meta.textContent = "처리중... (색칠/선 추출)";
+    const ink = labInkMask(roi);
+
+    meta.textContent = "처리중... (본체 선택)";
+    const compInfo = biggestComponent(ink);
+    if(!compInfo){
+      meta.textContent = "그림 영역을 찾지 못했습니다. (조명/거리/각도 확인)";
+      cap.delete(); warped.delete(); roi.delete(); ink.delete();
+      btnCapture.disabled = false;
+      return;
+    }
+
+    const { comp, bbox } = compInfo;
+
+    const pad2 = 18;
+    const cx = Math.max(0, bbox.x - pad2);
+    const cy = Math.max(0, bbox.y - pad2);
+    const cw = Math.min(comp.cols - cx, bbox.w + pad2*2);
+    const ch = Math.min(comp.rows - cy, bbox.h + pad2*2);
+
+    const compCrop = comp.roi(new cv.Rect(cx, cy, cw, ch));
+    const roiCrop = roi.roi(new cv.Rect(cx, cy, cw, ch)); // RGBA
+
+    const inv = new cv.Mat();
+    cv.bitwise_not(compCrop, inv);
+
+    const mv = new cv.MatVector();
+    cv.split(roiCrop, mv);
+    const c0 = mv.get(0), c1 = mv.get(1), c2 = mv.get(2);
+    c0.setTo(new cv.Scalar(0), inv);
+    c1.setTo(new cv.Scalar(0), inv);
+    c2.setTo(new cv.Scalar(0), inv);
+
+    const alpha = compCrop.clone();
+    const mv2 = new cv.MatVector();
+    mv2.push_back(c0); mv2.push_back(c1); mv2.push_back(c2); mv2.push_back(alpha);
+
+    const out = new cv.Mat();
+    cv.merge(mv2, out);
+
+    outCanvas.width = out.cols;
+    outCanvas.height = out.rows;
+    cv.imshow(outCanvas, out);
+
+    lastPngDataUrl = outCanvas.toDataURL("image/png");
+    outImg.src = lastPngDataUrl;
+
+    meta.textContent = "완료. 결과 PNG 생성됨";
+    log(`cap:${cap.cols}x${cap.rows} / warped:${warped.cols}x${warped.rows} / out:${out.cols}x${out.rows}`);
+
+    // cleanup
+    cap.delete(); warped.delete(); roi.delete(); ink.delete();
+    comp.delete(); compCrop.delete(); roiCrop.delete();
+    inv.delete();
+    mv.delete(); mv2.delete();
+    c0.delete(); c1.delete(); c2.delete(); alpha.delete();
+    out.delete();
+
+    btnDownload.disabled = false;
+    btnCapture.disabled = false;
+
+  }catch(e){
+    meta.textContent = "오류 발생: " + (e?.message || e);
+    btnCapture.disabled = false;
+  }
+}
+
+function downloadPng(){
+  if(!lastPngDataUrl){
+    meta.textContent = "먼저 캡처해서 PNG를 생성하세요.";
+    return;
+  }
+  const a = document.createElement("a");
+  a.href = lastPngDataUrl;
+  a.download = "dino_cutout.png";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+btnStart.addEventListener("click", startCamera);
+btnCapture.addEventListener("click", captureAndCutout);
+btnDownload.addEventListener("click", downloadPng);
+
+// Init
+(async function init(){
+  try{
+    setStatus("OpenCV 준비 대기...");
+    await waitOpenCVReady();
+    setStatus("OpenCV 준비 완료");
+    enableUI(true);
+    meta.textContent = "준비됨. 카메라 시작을 누르세요.";
+  }catch(e){
+    setStatus("OpenCV 로딩 실패");
+    meta.textContent = (e?.message || e);
+  }
+})();
