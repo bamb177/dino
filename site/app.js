@@ -136,16 +136,44 @@ function labInkMask(roiRGBA){
 }
 
 function biggestComponent(binMask){
-  // binMask: CV_8UC1 0/255
-  const labels = new cv.Mat();
-  const stats = new cv.Mat();
-  const centroids = new cv.Mat();
-  const n = cv.connectedComponentsWithStats(binMask, labels, stats, centroids, 8, cv.CV_32S);
+  // binMask: CV_8UC1 (0/255)
+  const contours = new cv.MatVector();
+  const hierarchy = new cv.Mat();
+  cv.findContours(binMask, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
 
-  if(n <= 1){
-    labels.delete(); stats.delete(); centroids.delete();
+  if(contours.size() === 0){
+    contours.delete(); hierarchy.delete();
     return null;
   }
+
+  let bestIdx = 0;
+  let bestArea = 0;
+  for(let i=0;i<contours.size();i++){
+    const cnt = contours.get(i);
+    const area = cv.contourArea(cnt);
+    if(area > bestArea){
+      bestArea = area;
+      bestIdx = i;
+    }
+    cnt.delete();
+  }
+
+  // best contour 다시 가져오기
+  const best = contours.get(bestIdx);
+  const rect = cv.boundingRect(best);
+
+  // mask 생성
+  const comp = new cv.Mat(binMask.rows, binMask.cols, cv.CV_8UC1);
+  comp.setTo(new cv.Scalar(0));
+  const color = new cv.Scalar(255);
+  cv.drawContours(comp, contours, bestIdx, color, -1); // fill
+
+  best.delete();
+  contours.delete(); hierarchy.delete();
+
+  return { comp, bbox: { x: rect.x, y: rect.y, w: rect.width, h: rect.height, area: bestArea } };
+}
+
 
   // stats: [label, x, y, w, h, area]
   let best = 1;
