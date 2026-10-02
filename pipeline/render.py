@@ -29,48 +29,59 @@ def load_font(size: int) -> ImageFont.FreeTypeFont:
 
 
 def draw_default_dino(colors: dict, mood: str, size: int = 700) -> Image.Image:
+    """사람처럼 두 발로 서 있는 공룡: 큰 머리, 셔츠+넥타이, 바지, 구두."""
     img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
-    body, belly, cheek = colors["body"], colors["belly"], colors["cheek"]
+    body, cheek = colors["body"], colors["cheek"]
+    shirt, tie, pants = colors.get("shirt", "#fff"), colors.get("tie", "#E8505B"), colors.get("pants", "#4A5A7A")
+    dark = "#5FAF55"
     s = size / 700
-    # 꼬리, 몸, 배
-    d.polygon([(120 * s, 520 * s), (20 * s, 600 * s), (200 * s, 580 * s)], fill=body)
-    d.ellipse([130 * s, 330 * s, 570 * s, 680 * s], fill=body)
-    d.ellipse([230 * s, 430 * s, 470 * s, 670 * s], fill=belly)
-    # 등 가시
-    for x in (200, 280, 360):
-        d.polygon([(x * s, 250 * s), ((x + 40) * s, 180 * s), ((x + 80) * s, 250 * s)], fill="#5FAF55")
-    # 머리
-    d.ellipse([150 * s, 120 * s, 550 * s, 470 * s], fill=body)
+
+    def P(*pts):
+        return [(x * s, y * s) for x, y in pts]
+
+    # 꼬리
+    d.polygon(P((235, 470), (110, 560), (150, 590), (260, 530)), fill=body)
+    # 다리 + 구두
+    for x in (265, 385):
+        d.rectangle([x * s, 520 * s, (x + 55) * s, 640 * s], fill=pants)
+        d.rounded_rectangle([(x - 15) * s, 625 * s, (x + 80) * s, 675 * s], radius=int(20 * s), fill="#3A2E2E")
+    # 몸통(셔츠)
+    d.rounded_rectangle([225 * s, 355 * s, 475 * s, 540 * s], radius=int(40 * s), fill=shirt, outline="#BBB", width=int(3 * s))
+    d.rectangle([225 * s, 500 * s, 475 * s, 540 * s], fill=pants)
+    # 넥타이
+    d.polygon(P((350, 365), (330, 385), (340, 395), (325, 470), (350, 495), (375, 470), (360, 395), (370, 385)), fill=tie)
+    # 팔
+    d.rounded_rectangle([180 * s, 370 * s, 232 * s, 500 * s], radius=int(25 * s), fill=shirt, outline="#BBB", width=int(3 * s))
+    d.rounded_rectangle([468 * s, 370 * s, 520 * s, 500 * s], radius=int(25 * s), fill=shirt, outline="#BBB", width=int(3 * s))
+    for hx in (206, 494):
+        d.ellipse([(hx - 28) * s, 485 * s, (hx + 28) * s, 540 * s], fill=body)
+    # 등 가시 + 머리
+    for x in (240, 310, 380):
+        d.polygon(P((x, 105), (x + 35, 40), (x + 70, 105)), fill=dark)
+    d.ellipse([160 * s, 70 * s, 540 * s, 400 * s], fill=body)
     # 눈
-    eye_y = 260 * s
-    for ex in (270 * s, 430 * s):
+    eye_y = 220 * s
+    for ex in (280 * s, 420 * s):
         if mood == "happy":
-            d.arc([ex - 35 * s, eye_y - 25 * s, ex + 35 * s, eye_y + 35 * s], 200, 340, fill="#222", width=int(10 * s))
+            d.arc([ex - 32 * s, eye_y - 22 * s, ex + 32 * s, eye_y + 32 * s], 200, 340, fill="#222", width=int(9 * s))
         elif mood == "shock":
-            d.ellipse([ex - 40 * s, eye_y - 40 * s, ex + 40 * s, eye_y + 40 * s], fill="white", outline="#222", width=int(6 * s))
-            d.ellipse([ex - 12 * s, eye_y - 12 * s, ex + 12 * s, eye_y + 12 * s], fill="#222")
+            d.ellipse([ex - 38 * s, eye_y - 38 * s, ex + 38 * s, eye_y + 38 * s], fill="white", outline="#222", width=int(6 * s))
+            d.ellipse([ex - 11 * s, eye_y - 11 * s, ex + 11 * s, eye_y + 11 * s], fill="#222")
         else:
-            d.ellipse([ex - 30 * s, eye_y - 34 * s, ex + 30 * s, eye_y + 34 * s], fill="#222")
-            d.ellipse([ex - 4 * s, eye_y - 24 * s, ex + 14 * s, eye_y - 6 * s], fill="white")
+            d.ellipse([ex - 28 * s, eye_y - 32 * s, ex + 28 * s, eye_y + 32 * s], fill="#222")
+            d.ellipse([ex - 4 * s, eye_y - 22 * s, ex + 12 * s, eye_y - 6 * s], fill="white")
         if mood == "sad":
-            d.ellipse([ex + 10 * s, eye_y + 40 * s, ex + 30 * s, eye_y + 75 * s], fill="#7EC8F5")
-    # 볼터치
-    for cx in (215 * s, 485 * s):
-        d.ellipse([cx - 35 * s, 320 * s, cx + 35 * s, 360 * s], fill=cheek)
-    # 입
-    mx, my = 350 * s, 360 * s
+            d.ellipse([ex + 8 * s, eye_y + 38 * s, ex + 28 * s, eye_y + 72 * s], fill="#7EC8F5")
+    for cx in (225 * s, 475 * s):
+        d.ellipse([cx - 32 * s, 275 * s, cx + 32 * s, 312 * s], fill=cheek)
+    mx, my = 350 * s, 315 * s
     if mood == "shock":
-        d.ellipse([mx - 25 * s, my - 10 * s, mx + 25 * s, my + 45 * s], fill="#6B2E2E")
+        d.ellipse([mx - 22 * s, my - 8 * s, mx + 22 * s, my + 40 * s], fill="#6B2E2E")
     elif mood == "sad":
-        d.arc([mx - 30 * s, my + 5 * s, mx + 30 * s, my + 45 * s], 200, 340, fill="#222", width=int(7 * s))
+        d.arc([mx - 28 * s, my + 5 * s, mx + 28 * s, my + 42 * s], 200, 340, fill="#222", width=int(7 * s))
     else:
-        d.arc([mx - 30 * s, my - 25 * s, mx + 30 * s, my + 20 * s], 20, 160, fill="#222", width=int(7 * s))
-    # 팔, 발
-    d.ellipse([140 * s, 470 * s, 210 * s, 540 * s], fill=body)
-    d.ellipse([490 * s, 470 * s, 560 * s, 540 * s], fill=body)
-    d.ellipse([200 * s, 630 * s, 310 * s, 690 * s], fill="#5FAF55")
-    d.ellipse([390 * s, 630 * s, 500 * s, 690 * s], fill="#5FAF55")
+        d.arc([mx - 28 * s, my - 22 * s, mx + 28 * s, my + 18 * s], 20, 160, fill="#222", width=int(7 * s))
     return img
 
 

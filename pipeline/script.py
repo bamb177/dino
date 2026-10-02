@@ -28,21 +28,21 @@ SCHEMA = {
 
 FALLBACK_SCRIPTS = [
     {
-        "title": "월요일 아침 디노",
+        "title": "월요일 아침 룡대리",
         "beats": [
             {"caption": "일요일 밤 11시: 내일은 일찍 일어나야지", "mood": "happy"},
             {"caption": "월요일 아침 8시 50분", "mood": "shock"},
-            {"caption": "오늘도 버텼다 디노…", "mood": "sad"},
+            {"caption": "오늘도 버텼다 룡…", "mood": "sad"},
         ],
         "description": "월요일은 왜 매주 오는 걸까요",
         "hashtags": ["#직장인", "#월요병", "#공룡", "#밈", "#shorts"],
     },
     {
-        "title": "월급날 디노",
+        "title": "월급날 룡대리",
         "beats": [
             {"caption": "월급 들어왔다!!", "mood": "happy"},
             {"caption": "카드값, 월세, 보험료…", "mood": "shock"},
-            {"caption": "통장 스쳐 지나간 월급 디노…", "mood": "sad"},
+            {"caption": "통장 스쳐 지나간 월급 룡…", "mood": "sad"},
         ],
         "description": "월급은 로그인했다가 바로 로그아웃",
         "hashtags": ["#월급날", "#직장인공감", "#공룡", "#밈", "#shorts"],

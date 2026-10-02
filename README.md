@@ -1,6 +1,6 @@
-# 디노 밈 파이프라인
+# 룡대리 밈 파이프라인
 
-직장인 아기 공룡 **디노**가 나오는 9~12초 세로 밈 영상(YouTube Shorts / Instagram Reels)을 만드는 파이프라인입니다.
+사람처럼 서 있는 직장인 아기 공룡 **룡대리**가 나오는 9~12초 세로 밈 영상(YouTube Shorts / Instagram Reels)을 만드는 파이프라인입니다.
 
 ```
 대본(Claude) → 장면 렌더링(Pillow) → mp4 인코딩(ffmpeg) → [선택] 업로드(YouTube / Instagram)
