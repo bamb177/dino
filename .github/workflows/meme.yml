@@ -1,0 +1,61 @@
+name: Make meme video
+
+on:
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: "주제 (비우면 캐릭터 테마에서 자동 선택)"
+        required: false
+      publish:
+        description: "업로드 대상 (none = 영상만 만들어서 Artifacts 로 받기)"
+        type: choice
+        options: [none, youtube]
+        default: none
+      youtube_privacy:
+        description: "유튜브 공개 범위"
+        type: choice
+        options: [private, unlisted, public]
+        default: private
+  # 매일 자동 생성하려면 아래 주석을 푸세요 (업로드 없이 생성만 됩니다)
+  # schedule:
+  #   - cron: "0 0 * * *"   # 매일 09:00 KST
+
+permissions:
+  contents: read
+
+jobs:
+  make:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: meme-pipeline
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install ffmpeg + Korean fonts
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg fonts-noto-cjk
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install -r requirements.txt
+
+      - name: Generate (and optionally publish)
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
+          YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
+          YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
+          TOPIC: ${{ inputs.topic }}
+          PUBLISH: ${{ inputs.publish || 'none' }}
+          PRIVACY: ${{ inputs.youtube_privacy || 'private' }}
+        run: |
+          args=(--publish "$PUBLISH" --youtube-privacy "$PRIVACY")
+          if [ -n "$TOPIC" ]; then args+=(--topic "$TOPIC"); fi
+          python run.py "${args[@]}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: meme-video
+          path: meme-pipeline/out/
