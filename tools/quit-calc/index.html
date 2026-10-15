@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>퇴직금·실업급여 계산기 2026 | 퇴사 계산기</title>
+  <meta name="description" content="2026년 기준 퇴직금과 실업급여(구직급여)를 한 번에 계산하세요. 입사일, 퇴사일, 월급만 넣으면 예상 금액과 받는 기간을 바로 알려드립니다.">
+  <meta property="og:title" content="퇴직금·실업급여 계산기 2026">
+  <meta property="og:description" content="퇴사 전에 퇴직금과 실업급여를 한 번에 계산해 보세요.">
+  <meta property="og:type" content="website">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <h1>퇴사 계산기</h1>
+    <p class="sub">2026년 기준 퇴직금과 실업급여를 한 번에 계산합니다.</p>
+  </header>
+
+  <main>
+    <nav class="tabs" role="tablist">
+      <button role="tab" class="tab active" data-tab="sev" aria-selected="true">퇴직금</button>
+      <button role="tab" class="tab" data-tab="ue" aria-selected="false">실업급여</button>
+    </nav>
+
+    <!-- 퇴직금 -->
+    <section id="sev" class="panel active">
+      <form id="sev-form" class="card">
+        <label>입사일 <input type="date" name="startDate" required></label>
+        <label>마지막 근무일 <input type="date" name="lastDate" required></label>
+        <label>퇴사 전 3개월 월급 (세전, 한 달 기준)
+          <input type="text" inputmode="numeric" name="monthly" placeholder="예: 3,000,000" required>
+        </label>
+        <details>
+          <summary>상여금·연차수당 입력 (선택)</summary>
+          <label>최근 1년 상여금 합계 <input type="text" inputmode="numeric" name="bonus" placeholder="0"></label>
+          <label>최근 1년 연차수당 <input type="text" inputmode="numeric" name="leave" placeholder="0"></label>
+        </details>
+        <button type="submit" class="go">퇴직금 계산하기</button>
+      </form>
+      <div id="sev-result" class="result" hidden></div>
+    </section>
+
+    <!-- 실업급여 -->
+    <section id="ue" class="panel">
+      <form id="ue-form" class="card">
+        <label>퇴사 시 만 나이 <input type="number" name="age" min="15" max="100" placeholder="예: 42" required></label>
+        <label>고용보험 가입 기간 (모든 직장 합산)
+          <select name="years">
+            <option value="0">1년 미만</option>
+            <option value="1" selected>1년 이상 3년 미만</option>
+            <option value="3">3년 이상 5년 미만</option>
+            <option value="5">5년 이상 10년 미만</option>
+            <option value="10">10년 이상</option>
+          </select>
+        </label>
+        <label>퇴사 전 3개월 월급 (세전, 한 달 기준)
+          <input type="text" inputmode="numeric" name="monthly" placeholder="예: 3,000,000" required>
+        </label>
+        <label>하루 근무 시간 <input type="number" name="hours" min="1" max="12" value="8"></label>
+        <label class="check"><input type="checkbox" name="disabled"> 장애인입니다</label>
+        <button type="submit" class="go">실업급여 계산하기</button>
+      </form>
+      <div id="ue-result" class="result" hidden></div>
+    </section>
+
+    <!-- 광고 자리 (애드센스 승인 후 교체) -->
+    <aside class="ad-slot" aria-hidden="true">광고 영역</aside>
+
+    <section class="guide card">
+      <h2>알아두세요</h2>
+      <h3>퇴직금 받는 조건</h3>
+      <p>같은 회사에서 1년 이상, 주 15시간 이상 일했다면 받을 수 있습니다. 회사는 퇴사 후 14일 안에 지급해야 합니다.</p>
+      <h3>실업급여 받는 조건</h3>
+      <p>퇴사 전 18개월 동안 고용보험 가입 일수가 180일 이상이어야 하고, 권고사직·계약만료처럼 본인 뜻이 아닌 이유로 그만둬야 합니다. 퇴사 후 워크넷에 구직 등록을 하고 고용센터에 신청하세요.</p>
+      <h3>2026년 기준값</h3>
+      <ul>
+        <li>실업급여 하루 상한액 68,100원</li>
+        <li>실업급여 하루 하한액 66,048원 (최저시급 10,320원 × 80% × 8시간)</li>
+        <li>받는 기간 120일~270일 (나이·가입 기간에 따라)</li>
+      </ul>
+    </section>
+
+    <p class="disclaimer">이 계산 결과는 참고용 추정치이며 실제 지급액과 다를 수 있습니다. 정확한 금액은 회사 또는 고용노동부(국번 없이 1350)에 확인하세요.</p>
+  </main>
+
+  <script src="calc.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
