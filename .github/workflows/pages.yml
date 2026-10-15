@@ -45,7 +45,7 @@ jobs:
           cp -r site/. _site/
           mkdir -p _site/quit-calc
           cp -r tools/quit-calc/. _site/quit-calc/
-          rm -f _site/quit-calc/calc.test.js _site/quit-calc/README.md
+          rm -rf _site/quit-calc/calc.test.js _site/quit-calc/README.md _site/quit-calc/content _site/quit-calc/scripts
 
       - name: Configure Pages
         uses: actions/configure-pages@v5

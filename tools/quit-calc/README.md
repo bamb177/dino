@@ -6,4 +6,4 @@
 - 테스트: `node tools/quit-calc/calc.test.js`
 - 광고: `index.html`의 `.ad-slot` 자리를 애드센스 코드로 교체
 - 배포: `main`에 합쳐지면 Pages 워크플로가 `site/`와 함께 `/quit-calc/` 경로로 배포 (https://bamb177.github.io/dino/quit-calc/)
-- 안내 글: `guide/`, 검색엔진 제출용 `sitemap.xml`
+- 안내 글: `content/`에 본문을 쓰고 `python3 tools/quit-calc/scripts/build.py`를 실행하면 `guide/`, `privacy.html`, `sitemap.xml`이 다시 만들어짐 (결과물도 커밋)
