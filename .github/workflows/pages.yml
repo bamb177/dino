@@ -35,13 +35,25 @@ jobs:
           echo "Downloaded:"
           ls -al site/vendor
 
+      # 퇴사 계산기 테스트 후 /quit-calc/ 경로로 함께 배포
+      - name: Test quit-calc
+        run: node tools/quit-calc/calc.test.js
+
+      - name: Assemble site
+        run: |
+          mkdir -p _site
+          cp -r site/. _site/
+          mkdir -p _site/quit-calc
+          cp -r tools/quit-calc/. _site/quit-calc/
+          rm -f _site/quit-calc/calc.test.js _site/quit-calc/README.md
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: site
+          path: _site
 
       - name: Deploy to GitHub Pages
         id: deployment

@@ -44,3 +44,13 @@ summary { cursor: pointer; color: var(--accent); margin-bottom: 10px; }
 .guide h3 { font-size: 1rem; margin: 16px 0 4px; }
 .guide p, .guide ul { margin: 0; color: var(--muted); font-size: .93rem; }
 .disclaimer { color: var(--muted); font-size: .8rem; margin: 18px 4px 40px; }
+.home { color: var(--accent); text-decoration: none; }
+.article { max-width: 680px; width: calc(100% - 32px); margin: 16px auto; }
+.article h1 { font-size: 1.45rem; margin-top: 0; line-height: 1.4; }
+.article h2 { font-size: 1.12rem; margin: 26px 0 8px; }
+.article p, .article li { font-size: 1rem; }
+.article ul, .article ol { padding-left: 1.2em; }
+.formula-box { background: var(--accent-soft); border-radius: 8px; padding: 10px 12px; font-weight: 600; }
+.cta { margin-top: 28px; }
+.cta a, .foot a, .guide a { color: var(--accent); }
+.foot { text-align: center; color: var(--muted); font-size: .85rem; padding: 8px 16px 40px; line-height: 2; }
