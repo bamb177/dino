@@ -12,7 +12,7 @@ on:
       provider:
         description: "영상 방식 (비우면 저장소 변수 VIDEO_PROVIDER, 없으면 local)"
         type: choice
-        options: ["", local, veo]
+        options: ["", local, grok]
         default: ""
       publish:
         description: "업로드 (비우면 저장소 변수 AUTO_PUBLISH 가 true 일 때만 유튜브 업로드)"
@@ -51,7 +51,7 @@ jobs:
       - name: Manager Claude -> video -> (optional) upload
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
           YT_API_KEY: ${{ secrets.YT_API_KEY }}
           YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
           YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}

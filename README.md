@@ -4,7 +4,7 @@
 
 ```
 트렌드 수집 → 매니저 Claude가 소재 선정 → 대본 작성 → 매니저 Claude가 검수(반려 시 최대 3번 재작성)
-            → 영상 생성(local 또는 Veo) → 승인된 경우에만 YouTube 업로드 → 업로드 기록 저장
+            → 영상 생성(local 또는 Grok) → 승인된 경우에만 YouTube 업로드 → 업로드 기록 저장
 ```
 
 기본값은 **아무것도 업로드하지 않는** 상태입니다. 아래 "켜는 순서"를 따라 직접 켜야 올라갑니다.
@@ -19,11 +19,11 @@
    | `ANTHROPIC_API_KEY` | 매니저 Claude (소재 선정, 대본, 검수) | 필수 |
    | `YT_CLIENT_ID`, `YT_CLIENT_SECRET`, `YT_REFRESH_TOKEN` | 유튜브 업로드 | 업로드할 때 |
    | `YT_API_KEY` | 유튜브 인기 급상승 목록을 트렌드에 추가 | 선택 |
-   | `GEMINI_API_KEY` | Veo 영상 생성 | `veo` 쓸 때 |
+   | `XAI_API_KEY` | Grok 영상 생성 | `grok` 쓸 때 |
 
 3. **수동 실행으로 먼저 확인**: Actions → Make meme short → Run workflow (모두 기본값). 끝나면 Artifacts 의 mp4 와 `meta.json` 확인.
 4. **업로드 켜기** (Variables 탭): `AUTO_PUBLISH=true`. 공개 범위 `YT_PRIVACY` 는 기본 `private` 이라, 몇 편은 비공개로 올려서 확인한 뒤 `public` 으로 바꾸세요.
-5. **영상 AI 켜기** (선택): `VIDEO_PROVIDER=veo` (아래 비용 참고).
+5. **영상 AI 켜기** (선택): `VIDEO_PROVIDER=grok` (아래 비용 참고).
 
 멈추고 싶으면 `AUTO_PUBLISH` 를 지우거나 false 로 바꾸면 됩니다.
 
@@ -32,18 +32,18 @@
 - **Anthropic**: console.anthropic.com 에서 API 키 발급(유료 결제 필요).
 - **YouTube 업로드**: Google Cloud 콘솔에서 프로젝트 생성 → YouTube Data API v3 사용 설정 → OAuth 클라이언트(데스크톱 앱) 생성 → `https://www.googleapis.com/auth/youtube.upload` 범위로 동의하고 받은 refresh token 을 `YT_REFRESH_TOKEN` 에 저장. 채널 소유 계정으로 로그인해야 합니다.
   - 구글 감사(audit)를 통과하지 않은 API 프로젝트로 올린 영상은 **비공개로 잠깁니다.** 그 사이에는 비공개로 올리고 유튜브 스튜디오에서 직접 공개로 바꾸는 방식이 현실적입니다.
-- **Gemini(Veo)**: aistudio.google.com 에서 API 키 발급, 결제 설정 필요.
+- **xAI(Grok)**: console.x.ai 에서 API 키 발급 + 크레딧 충전. **SuperGrok 구독과 API 는 결제가 따로**라서, 구독만으로는 API 키/크레딧이 생기지 않는 것으로 알려져 있습니다(콘솔에서 확인하세요).
 
 ## 영상 만드는 방식
 
 | 방식 | 비용 | 품질 |
 | --- | --- | --- |
 | `local` (기본) | 무료 | 코드로 그린 단순한 캐릭터 + 자막. 채널 초반 테스트용 |
-| `veo` (추천) | 아래 참고 | AI 가 만든 8초 영상(귀여운 3D 풍) 위에 한글 자막. 캐릭터 PNG(`character/dino.png`)를 넣으면 참조 이미지로 써서 외형을 맞춥니다 |
+| `grok` | 아래 참고 | Grok Imagine 이 만든 10초 영상(9:16, 720p, 립싱크 음성 포함) 위에 한글 자막 |
 
-**Veo 비용 (제가 기억하는 대략치라, 쓰기 전에 Google AI 가격 페이지에서 꼭 확인하세요)**: Veo 3.1 Fast 는 초당 대략 $0.15, 표준 모델은 초당 대략 $0.40 안팎입니다. 8초 영상 한 편이 약 $1.2(Fast) ~ $3.2(표준), 주 3회면 한 달 13편 안팎이라 **월 $16 ~ $42 정도**를 예상하면 됩니다. 매니저 Claude 호출은 한 편에 수백 원 수준으로 추정합니다. 생성이 안전 필터에 걸리거나 실패해도 요금이 나갈 수 있습니다.
+**Grok 비용** (xAI 문서 기준): `grok-imagine-video-1.5` 는 초당 $0.08부터, `grok-imagine-video-1.5-lite` 는 초당 $0.02부터이고 해상도에 따라 올라갑니다. 10초 한 편이 약 $0.8(1.5) 또는 $0.2(lite) 이상이라, 주 3회(월 13편 안팎)면 **월 $3 ~ $10 이상**을 예상하면 됩니다. 변수 `GROK_MODEL`, `GROK_RESOLUTION` 으로 모델과 해상도를 바꿀 수 있습니다. 매니저 Claude 호출은 한 편에 수백 원 수준으로 추정합니다.
 
-Veo 연결 코드는 SDK 의 타입 이름까지만 확인했고 **실제 API 호출은 아직 해 보지 못했습니다.** 키를 넣고 수동 실행으로 먼저 한 편 확인해 주세요.
+Grok 연결 코드는 xAI 문서의 요청/응답 형식대로 만들고 모의 응답으로 흐름만 확인했습니다. **실제 API 호출은 아직 해 보지 못했으니** 키를 넣고 수동 실행으로 먼저 한 편 확인해 주세요.
 
 ## 매니저 Claude 가 하는 일
 
@@ -66,7 +66,7 @@ Veo 연결 코드는 SDK 의 타입 이름까지만 확인했고 **실제 API �
 pip install -r requirements.txt   # ffmpeg 와 한글 폰트(fonts-noto-cjk)도 필요
 python run.py                     # 영상만 생성 (out/<시각>/)
 python run.py --topic "점심 메뉴 고르기"
-python run.py --provider veo --publish youtube --youtube-privacy private
+python run.py --provider grok --publish youtube --youtube-privacy private
 ```
 
 ## 캐릭터 바꾸기

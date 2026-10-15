@@ -1,63 +1,76 @@
 """영상 만들기. provider 를 고릅니다.
 
 - local: 무료. Pillow 로 그린 캐릭터 + 자막 (render.py)
-- veo:   Google Veo (Gemini API). AI 가 만든 8초 영상 위에 한글 자막을 ffmpeg 로 입힙니다. GEMINI_API_KEY 필요, 유료.
+- grok:  xAI Grok Imagine. AI 가 만든 10초 영상 위에 한글 자막을 ffmpeg 로 입힙니다. XAI_API_KEY 필요, 유료.
 """
 import os
 import subprocess
 import time
 from pathlib import Path
 
+import requests
 from PIL import Image, ImageDraw
 
 from .render import H, W, load_font, render_video, wrap_text
 
-VEO_MODEL = os.environ.get("VEO_MODEL", "veo-3.1-fast-generate-preview")
-VEO_SECONDS = 8
+XAI_API = "https://api.x.ai/v1"
+GROK_MODEL = os.environ.get("GROK_MODEL", "grok-imagine-video-1.5")  # 더 싼 모델: grok-imagine-video-1.5-lite
+GROK_RESOLUTION = os.environ.get("GROK_RESOLUTION", "720p")
+GROK_SECONDS = 10
 
 
 def make_video(script: dict, character: dict, out_path: Path, provider: str, char_png: Path | None = None) -> Path:
-    if provider == "veo":
-        return _veo(script, character, out_path, char_png)
+    if provider == "grok":
+        return _grok(script, character, out_path)
     return render_video(script, character, out_path, char_png)
 
 
-def _veo_prompt(script: dict, character: dict) -> str:
+def _grok_prompt(script: dict, character: dict) -> str:
     scenes = " ".join(f"({i + 1}) {b['scene']}." for i, b in enumerate(script["beats"]))
     return (
-        f"세로 숏폼 코미디 영상, 약 {VEO_SECONDS}초. 주인공: {character['species']}. "
+        f"세로 숏폼 코미디 영상, 약 {GROK_SECONDS}초. 주인공: {character['species']}. "
         f"성격: {', '.join(character['personality'])}. 장면 순서: {scenes} "
         "귀여운 3D 애니메이션 스타일, 밝은 색감, 카메라는 고정, 화면에 글자나 자막은 넣지 마. "
-        "실존 인물, 브랜드 로고, 음악은 넣지 마."
+        "실존 인물, 브랜드 로고, 배경 음악은 넣지 마."
     )
 
 
-def _veo(script: dict, character: dict, out_path: Path, char_png: Path | None) -> Path:
-    from google import genai
-    from google.genai import types
+def _grok(script: dict, character: dict, out_path: Path) -> Path:
+    """xAI Grok Imagine 영상 API (https://docs.x.ai). XAI_API_KEY 필요, 유료(API 크레딧)."""
+    headers = {"Authorization": f"Bearer {os.environ['XAI_API_KEY']}", "Content-Type": "application/json"}
+    r = requests.post(
+        f"{XAI_API}/videos/generations",
+        headers=headers,
+        json={
+            "model": GROK_MODEL,
+            "prompt": _grok_prompt(script, character),
+            "duration": GROK_SECONDS,
+            "aspect_ratio": "9:16",
+            "resolution": GROK_RESOLUTION,
+        },
+        timeout=60,
+    )
+    r.raise_for_status()
+    request_id = r.json()["request_id"]
 
-    client = genai.Client()  # GEMINI_API_KEY
-    config = types.GenerateVideosConfig(aspect_ratio="9:16", duration_seconds=VEO_SECONDS, number_of_videos=1)
-    if char_png and char_png.exists():  # 캐릭터 일관성을 위해 참조 이미지 사용
-        ref = types.VideoGenerationReferenceImage(
-            image=types.Image(image_bytes=char_png.read_bytes(), mime_type="image/png"),
-            reference_type="ASSET",
-        )
-        config.reference_images = [ref]
-    op = client.models.generate_videos(model=VEO_MODEL, prompt=_veo_prompt(script, character), config=config)
-    for _ in range(60):  # 최대 약 10분
-        if op.done:
+    for _ in range(120):  # 최대 약 10분
+        time.sleep(5)
+        status = requests.get(f"{XAI_API}/videos/{request_id}", headers=headers, timeout=60)
+        status.raise_for_status()
+        data = status.json()
+        if data.get("status") == "done":
             break
-        time.sleep(10)
-        op = client.operations.get(op)
-    if not op.done or not op.response or not op.response.generated_videos:
-        raise RuntimeError(f"Veo 영상 생성 실패: {getattr(op, 'error', None) or '시간 초과/안전 필터'}")
-    video = op.response.generated_videos[0].video
-    client.files.download(file=video)
-    raw = out_path.with_name("veo_raw.mp4")
+        if data.get("status") in ("failed", "expired"):
+            raise RuntimeError(f"Grok 영상 생성 실패: {data}")
+    else:
+        raise TimeoutError("Grok 영상 생성 대기 시간 초과")
+
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    video.save(str(raw))
-    return burn_captions(raw, script, out_path, VEO_SECONDS)
+    raw = out_path.with_name("grok_raw.mp4")
+    video = requests.get(data["video"]["url"], timeout=120)
+    video.raise_for_status()
+    raw.write_bytes(video.content)
+    return burn_captions(raw, script, out_path, GROK_SECONDS)
 
 
 def burn_captions(clip: Path, script: dict, out_path: Path, seconds: float) -> Path:

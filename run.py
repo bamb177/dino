@@ -3,7 +3,7 @@
 예)
   python run.py                          # 트렌드 수집 -> 대본 -> 영상 (업로드 안 함)
   python run.py --topic "점심 메뉴 고르기"
-  python run.py --provider veo           # 영상 생성 AI(Veo) 사용 (GEMINI_API_KEY 필요, 유료)
+  python run.py --provider grok          # 영상 생성 AI(Grok Imagine) 사용 (XAI_API_KEY 필요, 유료)
   python run.py --publish youtube        # 매니저가 승인하면 유튜브에 업로드
 """
 import argparse
@@ -23,7 +23,7 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument("--character", default="dino")
     p.add_argument("--topic", help="주제를 직접 지정하면 트렌드 수집을 건너뜁니다")
-    p.add_argument("--provider", choices=["local", "veo"], default="local")
+    p.add_argument("--provider", choices=["local", "grok"], default="local")
     p.add_argument("--geo", default="KR", help="트렌드 국가 코드")
     p.add_argument("--publish", choices=["none", "youtube", "instagram", "both"], default="none")
     p.add_argument("--youtube-privacy", choices=["private", "unlisted", "public"], default="private")
