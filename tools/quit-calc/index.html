@@ -8,90 +8,144 @@
   <meta property="og:title" content="퇴직금·실업급여 계산기 2026">
   <meta property="og:description" content="퇴사 전에 퇴직금과 실업급여를 한 번에 계산해 보세요.">
   <meta property="og:type" content="website">
+  <meta name="theme-color" content="#1b64da">
   <link rel="canonical" href="https://bamb177.github.io/dino/quit-calc/">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header class="top">
-    <h1>퇴사 계산기</h1>
-    <p class="sub">2026년 기준 퇴직금과 실업급여를 한 번에 계산합니다.</p>
+  <nav class="nav on-hero">
+    <div class="wrap">
+      <a class="brand" href="./"><span class="brand-mark">퇴</span>퇴사 계산기</a>
+      <a class="nav-link" href="guide/">안내 글</a>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="eyebrow">2026년 최신 기준</span>
+      <h1>퇴사 전에,<br>받을 돈부터 확인하세요</h1>
+      <p>퇴직금과 실업급여를 1분 만에 계산해 드려요.</p>
+    </div>
   </header>
 
-  <main>
-    <nav class="tabs" role="tablist">
-      <button role="tab" class="tab active" data-tab="sev" aria-selected="true">퇴직금</button>
-      <button role="tab" class="tab" data-tab="ue" aria-selected="false">실업급여</button>
-    </nav>
+  <main class="wrap">
+    <section class="calc">
+      <div class="card">
+        <div class="seg" role="tablist" data-active="sev">
+          <span class="seg-pill" aria-hidden="true"></span>
+          <button type="button" role="tab" class="seg-btn active" data-tab="sev" aria-selected="true">퇴직금</button>
+          <button type="button" role="tab" class="seg-btn" data-tab="ue" aria-selected="false">실업급여</button>
+        </div>
 
-    <!-- 퇴직금 -->
-    <section id="sev" class="panel active">
-      <form id="sev-form" class="card">
-        <label>입사일 <input type="date" name="startDate" required></label>
-        <label>마지막 근무일 <input type="date" name="lastDate" required></label>
-        <label>퇴사 전 3개월 월급 (세전, 한 달 기준)
-          <input type="text" inputmode="numeric" name="monthly" placeholder="예: 3,000,000" required>
-        </label>
-        <details>
-          <summary>상여금·연차수당 입력 (선택)</summary>
-          <label>최근 1년 상여금 합계 <input type="text" inputmode="numeric" name="bonus" placeholder="0"></label>
-          <label>최근 1년 연차수당 <input type="text" inputmode="numeric" name="leave" placeholder="0"></label>
-        </details>
-        <button type="submit" class="go">퇴직금 계산하기</button>
-      </form>
-      <div id="sev-result" class="result" hidden></div>
+        <!-- 퇴직금 -->
+        <form id="sev" class="panel active">
+          <div class="row">
+            <label class="field"><span class="lbl">입사일</span>
+              <span class="input"><input type="date" name="startDate" required></span>
+            </label>
+            <label class="field"><span class="lbl">마지막 근무일</span>
+              <span class="input"><input type="date" name="lastDate" required></span>
+            </label>
+          </div>
+          <label class="field"><span class="lbl">월급 <small>세전, 퇴사 전 3개월 평균</small></span>
+            <span class="input"><input type="text" inputmode="numeric" name="monthly" placeholder="3,000,000" required><span class="unit">원</span></span>
+          </label>
+          <details class="more">
+            <summary>상여금·연차수당 추가</summary>
+            <label class="field"><span class="lbl">최근 1년 상여금 합계</span>
+              <span class="input"><input type="text" inputmode="numeric" name="bonus" placeholder="0"><span class="unit">원</span></span>
+            </label>
+            <label class="field"><span class="lbl">최근 1년 연차수당</span>
+              <span class="input"><input type="text" inputmode="numeric" name="leave" placeholder="0"><span class="unit">원</span></span>
+            </label>
+          </details>
+          <button type="submit" class="go">퇴직금 계산하기</button>
+        </form>
+
+        <!-- 실업급여 -->
+        <form id="ue" class="panel">
+          <div class="row">
+            <label class="field"><span class="lbl">퇴사 시 나이</span>
+              <span class="input"><input type="number" name="age" min="15" max="100" placeholder="42" required><span class="unit">세</span></span>
+            </label>
+            <label class="field"><span class="lbl">하루 근무</span>
+              <span class="input"><input type="number" name="hours" min="1" max="12" value="8"><span class="unit">시간</span></span>
+            </label>
+          </div>
+          <label class="field"><span class="lbl">고용보험 가입 기간 <small>모든 직장 합산</small></span>
+            <span class="input select">
+              <select name="years">
+                <option value="0">1년 미만</option>
+                <option value="1" selected>1년 이상 ~ 3년 미만</option>
+                <option value="3">3년 이상 ~ 5년 미만</option>
+                <option value="5">5년 이상 ~ 10년 미만</option>
+                <option value="10">10년 이상</option>
+              </select>
+            </span>
+          </label>
+          <label class="field"><span class="lbl">월급 <small>세전, 퇴사 전 3개월 평균</small></span>
+            <span class="input"><input type="text" inputmode="numeric" name="monthly" placeholder="3,000,000" required><span class="unit">원</span></span>
+          </label>
+          <label class="chip-check"><input type="checkbox" name="disabled"><span class="box"></span>장애인이에요</label>
+          <button type="submit" class="go">실업급여 계산하기</button>
+        </form>
+      </div>
+
+      <div id="result" class="card result" hidden aria-live="polite"></div>
     </section>
 
-    <!-- 실업급여 -->
-    <section id="ue" class="panel">
-      <form id="ue-form" class="card">
-        <label>퇴사 시 만 나이 <input type="number" name="age" min="15" max="100" placeholder="예: 42" required></label>
-        <label>고용보험 가입 기간 (모든 직장 합산)
-          <select name="years">
-            <option value="0">1년 미만</option>
-            <option value="1" selected>1년 이상 3년 미만</option>
-            <option value="3">3년 이상 5년 미만</option>
-            <option value="5">5년 이상 10년 미만</option>
-            <option value="10">10년 이상</option>
-          </select>
-        </label>
-        <label>퇴사 전 3개월 월급 (세전, 한 달 기준)
-          <input type="text" inputmode="numeric" name="monthly" placeholder="예: 3,000,000" required>
-        </label>
-        <label>하루 근무 시간 <input type="number" name="hours" min="1" max="12" value="8"></label>
-        <label class="check"><input type="checkbox" name="disabled"> 장애인입니다</label>
-        <button type="submit" class="go">실업급여 계산하기</button>
-      </form>
-      <div id="ue-result" class="result" hidden></div>
+    <aside class="ad-slot" aria-hidden="true"></aside>
+
+    <section class="section">
+      <h2 class="section-title">2026년 실업급여 기준</h2>
+      <div class="stats">
+        <div class="stat"><b>68,100원</b><span>하루 최대</span></div>
+        <div class="stat"><b>66,048원</b><span>하루 최소</span></div>
+        <div class="stat"><b>120~270일</b><span>받는 기간</span></div>
+      </div>
     </section>
 
-    <!-- 광고 자리 (애드센스 승인 후 교체) -->
-    <aside class="ad-slot" aria-hidden="true">광고 영역</aside>
+    <section class="section">
+      <h2 class="section-title">받을 수 있는지 확인하세요</h2>
+      <div class="cond">
+        <div class="card">
+          <h3><i class="i-blue">퇴</i>퇴직금</h3>
+          <ul class="checks">
+            <li>같은 회사에서 1년 이상 근무</li>
+            <li>일주일에 15시간 이상 근무</li>
+            <li>퇴사 후 14일 안에 받아요</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3><i class="i-green">실</i>실업급여</h3>
+          <ul class="checks">
+            <li>퇴사 전 18개월 중 고용보험 180일 이상</li>
+            <li>권고사직·계약만료 등 비자발적 퇴사</li>
+            <li>고용24 구직 등록 후 고용센터 신청</li>
+          </ul>
+        </div>
+      </div>
+    </section>
 
-    <section class="guide card">
-      <h2>알아두세요</h2>
-      <h3>퇴직금 받는 조건</h3>
-      <p>같은 회사에서 1년 이상, 주 15시간 이상 일했다면 받을 수 있습니다. 회사는 퇴사 후 14일 안에 지급해야 합니다.</p>
-      <h3>실업급여 받는 조건</h3>
-      <p>퇴사 전 18개월 동안 고용보험 가입 일수가 180일 이상이어야 하고, 권고사직·계약만료처럼 본인 뜻이 아닌 이유로 그만둬야 합니다. 퇴사 후 고용24에서 구직 등록과 온라인 교육을 마치고 고용센터에 신청하세요.</p>
-      <h3>2026년 기준값</h3>
-      <ul>
-        <li>실업급여 하루 상한액 68,100원</li>
-        <li>실업급여 하루 하한액 66,048원 (최저시급 10,320원 × 80% × 8시간)</li>
-        <li>받는 기간 120일~270일 (나이·가입 기간에 따라)</li>
-      </ul>
-      <h3>더 읽어보기</h3>
-      <ul>
-        <li><a href="guide/severance-how.html">퇴직금 계산 방법 총정리</a></li>
-        <li><a href="guide/unemployment-voluntary.html">자진퇴사도 실업급여 받을 수 있을까?</a></li>
-        <li><a href="guide/annual-leave-pay.html">퇴사할 때 남은 연차, 돈으로 받는 법</a></li>
-        <li><a href="guide/severance-unpaid.html">퇴직금을 못 받았을 때 대처법</a></li>
-        <li><a href="guide/">안내 글 전체 보기 →</a></li>
-      </ul>
+    <section class="section">
+      <h2 class="section-title">퇴사 전에 읽어보세요</h2>
+      <div class="guides">
+<!-- guides:start -->
+        <a class="guide-card" href="guide/severance-how.html"><span class="tag tag-퇴직금">퇴직금</span><span class="t">퇴직금 계산 방법 총정리 (2026)</span><span class="arrow">›</span></a>
+        <a class="guide-card" href="guide/unemployment-voluntary.html"><span class="tag tag-실업급여">실업급여</span><span class="t">자진퇴사도 실업급여 받을 수 있을까? 인정되는 사유와 신청 순서</span><span class="arrow">›</span></a>
+        <a class="guide-card" href="guide/annual-leave-pay.html"><span class="tag tag-연차">연차</span><span class="t">퇴사할 때 남은 연차, 돈으로 받는 법 (연차수당 계산)</span><span class="arrow">›</span></a>
+        <a class="guide-card" href="guide/severance-unpaid.html"><span class="tag tag-퇴직금">퇴직금</span><span class="t">퇴직금을 못 받았을 때 대처법: 진정 넣는 순서와 대지급금</span><span class="arrow">›</span></a>
+<!-- guides:end -->
+      </div>
+      <a class="see-all" href="guide/">안내 글 전체 보기</a>
     </section>
 
     <p class="disclaimer">이 계산 결과는 참고용 추정치이며 실제 지급액과 다를 수 있습니다. 정확한 금액은 회사 또는 고용노동부(국번 없이 1350)에 확인하세요.</p>
   </main>
-  <footer class="foot"><a href="guide/">안내 글 모음</a> · <a href="privacy.html">개인정보처리방침</a></footer>
+
+  <footer class="foot"><a href="guide/">안내 글</a><a href="privacy.html">개인정보처리방침</a></footer>
 
   <script src="calc.js"></script>
   <script src="app.js"></script>
