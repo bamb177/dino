@@ -26,8 +26,20 @@ def read(slug):
     return title, desc, body
 
 
-def page(path, title, desc, body, depth):
+FONT = "https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
+# 계산기 첫 화면에 보여 줄 글
+FEATURED = ["severance-how", "unemployment-voluntary", "annual-leave-pay", "severance-unpaid"]
+
+
+def guide_card(href, tag, title):
+    return (f'        <a class="guide-card" href="{href}"><span class="tag tag-{tag}">{tag}</span>'
+            f'<span class="t">{title}</span><span class="arrow">›</span></a>')
+
+
+def page(path, title, desc, body, depth, tag=None, lead=None, related=""):
     up = "../" * depth or "./"
+    head_tag = f'<span class="tag tag-{tag}">{tag}</span>\n      ' if tag else ""
+    lead_html = f"<p>{lead}</p>" if lead else ""
     return f'''<!doctype html>
 <html lang="ko">
 <head>
@@ -38,17 +50,30 @@ def page(path, title, desc, body, depth):
   <meta property="og:title" content="{title}">
   <meta property="og:description" content="{desc}">
   <meta property="og:type" content="article">
+  <meta name="theme-color" content="#1b64da">
   <link rel="canonical" href="{BASE}{path}">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="stylesheet" href="{FONT}">
   <link rel="stylesheet" href="{up}style.css">
 </head>
 <body>
-  <header class="top"><a class="home" href="{up}">← 퇴사 계산기</a></header>
-  <main class="article card">
-    <h1>{title}</h1>
+  <nav class="nav">
+    <div class="wrap">
+      <a class="brand" href="{up}"><span class="brand-mark">퇴</span>퇴사 계산기</a>
+      <a class="nav-link" href="{up}guide/">안내 글</a>
+    </div>
+  </nav>
+  <main class="wrap">
+    <header class="article-head">
+      {head_tag}<h1>{title}</h1>
+      {lead_html}
+    </header>
+    <article class="card article">
 {body.rstrip()}
-    <p class="cta"><a href="{up}">퇴직금·실업급여 바로 계산하기 →</a></p>
-  </main>
-  <footer class="foot"><a href="{up}guide/">안내 글 모음</a> · <a href="{up}privacy.html">개인정보처리방침</a></footer>
+    </article>
+    <a class="cta-card" href="{up}"><b>내 퇴직금·실업급여 계산하기 →</b><span>2026년 기준으로 1분 만에 확인해 보세요</span></a>
+{related}  </main>
+  <footer class="foot"><a href="{up}guide/">안내 글</a><a href="{up}privacy.html">개인정보처리방침</a></footer>
 </body>
 </html>
 '''
@@ -61,25 +86,48 @@ def write(path, html):
 
 def main():
     urls = ["", "guide/"]
+    meta = {}
+    for group, slugs in GUIDES:
+        for slug in slugs:
+            meta[slug] = (group,) + read(slug)
+
     sections = []
     for group, slugs in GUIDES:
-        items = []
+        cards = []
         for slug in slugs:
-            title, desc, body = read(slug)
+            _, title, desc, body = meta[slug]
+            others = [s for g, ss in GUIDES for s in ss if s != slug]
+            same = [s for s in slugs if s != slug]
+            pick = (same + [s for s in others if s not in same])[:3]
+            related = ('    <section class="section">\n      <h2 class="section-title">함께 읽으면 좋은 글</h2>\n'
+                       '      <div class="guides">\n'
+                       + "\n".join(guide_card(f"{s}.html", meta[s][0], meta[s][1]) for s in pick)
+                       + "\n      </div>\n    </section>\n")
             path = f"guide/{slug}.html"
-            write(path, page(path, title, desc, body, 1))
+            write(path, page(path, title, desc, body, 1, tag=group, related=related))
             urls.append(path)
-            items.append(f'      <li><a href="{slug}.html">{title}</a></li>')
-        sections.append(f"    <h2>{group}</h2>\n    <ul>\n" + "\n".join(items) + "\n    </ul>")
+            cards.append(guide_card(f"{slug}.html", group, title))
+        sections.append(f'    <h2 class="section-title">{group}</h2>\n    <div class="guides">\n'
+                        + "\n".join(cards) + "\n    </div>")
 
-    write("guide/index.html", page(
-        "guide/", "퇴사 안내 글 모음",
-        "퇴직금, 실업급여, 연차수당까지 퇴사 전에 알아야 할 내용을 모았습니다.",
-        "    <p>퇴사를 앞두고 많이 묻는 질문을 주제별로 정리했습니다.</p>\n" + "\n".join(sections), 1))
+    # 글 모음은 본문 카드 없이 주제별 카드 목록만 보여 준다
+    listing = page("guide/", "퇴사 안내 글 모음",
+                   "퇴직금, 실업급여, 연차수당까지 퇴사 전에 알아야 할 내용을 모았습니다.",
+                   "", 1, lead="퇴사를 앞두고 많이 묻는 질문을 주제별로 정리했어요.")
+    listing = listing.replace('    <article class="card article">\n\n    </article>\n', "\n".join(sections) + "\n")
+    write("guide/index.html", listing)
 
     title, desc, body = read("_privacy")
     write("privacy.html", page("privacy.html", title, desc, body, 0))
     urls.append("privacy.html")
+
+    # 계산기 첫 화면의 추천 글 카드
+    idx_path = os.path.join(ROOT, "index.html")
+    idx = open(idx_path, encoding="utf-8").read()
+    cards = "\n".join(guide_card(f"guide/{s}.html", meta[s][0], meta[s][1]) for s in FEATURED)
+    idx = re.sub(r"<!-- guides:start -->.*?<!-- guides:end -->",
+                 lambda m: f"<!-- guides:start -->\n{cards}\n<!-- guides:end -->", idx, flags=re.S)
+    write("index.html", idx)
 
     today = date.today().isoformat()
     write("sitemap.xml",

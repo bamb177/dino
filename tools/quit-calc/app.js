@@ -1,17 +1,21 @@
 (function () {
-  const won = (n) => Math.round(n).toLocaleString("ko-KR") + "원";
+  const fmt = (n) => Math.round(n).toLocaleString("ko-KR");
+  const won = (n) => fmt(n) + "원";
   const num = (v) => Number(String(v || "").replace(/[^\d]/g, "")) || 0;
+  const seg = document.querySelector(".seg");
+  const out = document.getElementById("result");
 
-  // 탭 전환
-  document.querySelectorAll(".tab").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      document.querySelectorAll(".tab").forEach((b) => {
-        b.classList.toggle("active", b === btn);
-        b.setAttribute("aria-selected", b === btn);
-      });
-      document.querySelectorAll(".panel").forEach((p) => p.classList.toggle("active", p.id === btn.dataset.tab));
+  function selectTab(id) {
+    seg.dataset.active = id;
+    seg.querySelectorAll(".seg-btn").forEach((b) => {
+      const on = b.dataset.tab === id;
+      b.classList.toggle("active", on);
+      b.setAttribute("aria-selected", on);
     });
-  });
+    document.querySelectorAll(".panel").forEach((p) => p.classList.toggle("active", p.id === id));
+    out.hidden = true;
+  }
+  seg.querySelectorAll(".seg-btn").forEach((b) => b.addEventListener("click", () => selectTab(b.dataset.tab)));
 
   // 금액 입력칸 천 단위 쉼표
   document.querySelectorAll('input[inputmode="numeric"]').forEach((el) => {
@@ -21,13 +25,37 @@
     });
   });
 
-  function show(el, html) {
-    el.innerHTML = html;
-    el.hidden = false;
-    el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  // 결과 금액이 0에서 올라가는 효과
+  function countUp(el, target) {
+    const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) { el.textContent = fmt(target); return; }
+    const start = performance.now(), dur = 700;
+    (function tick(t) {
+      const p = Math.min(1, (t - start) / dur);
+      el.textContent = fmt(target * (1 - Math.pow(1 - p, 3)));
+      if (p < 1) requestAnimationFrame(tick);
+    })(start);
   }
 
-  document.getElementById("sev-form").addEventListener("submit", (e) => {
+  function show({ label, amount, badges = [], rows, note, next }) {
+    out.innerHTML = `
+      <p class="label">${label}</p>
+      <p class="big"><span class="n">0</span><span class="won">원</span></p>
+      <div class="badges">${badges.map(([cls, t]) => `<span class="badge ${cls}">${t}</span>`).join("")}</div>
+      <dl class="rows">${rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join("")}</dl>
+      ${note ? `<p class="formula">${note}</p>` : ""}
+      ${next ? `<button type="button" class="next" data-go="${next[0]}">${next[1]}<span>→</span></button>` : ""}`;
+    out.hidden = false;
+    countUp(out.querySelector(".n"), amount);
+    const btn = out.querySelector(".next");
+    if (btn) btn.addEventListener("click", () => {
+      selectTab(btn.dataset.go);
+      document.querySelector(".calc").scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    out.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+
+  document.getElementById("sev").addEventListener("submit", (e) => {
     e.preventDefault();
     const f = e.target.elements;
     const r = QuitCalc.severance({
@@ -37,22 +65,32 @@
       annualBonus: num(f.bonus.value),
       annualLeavePay: num(f.leave.value),
     });
-    const out = document.getElementById("sev-result");
-    if (r.error) return show(out, `<p class="warn">${r.error}</p>`);
-    show(out, `
-      <p class="label">예상 퇴직금 (세전)</p>
-      <p class="big">${won(r.amount)}</p>
-      ${r.eligible ? "" : `<p class="warn">재직 기간이 1년 미만(${r.serviceDays}일)이라 법정 퇴직금 대상이 아닐 수 있습니다.</p>`}
-      <table>
-        <tr><th>재직 일수</th><td>${r.serviceDays.toLocaleString()}일</td></tr>
-        <tr><th>3개월 임금 총액</th><td>${won(r.wageTotal)}</td></tr>
-        <tr><th>3개월 일수</th><td>${r.periodDays}일</td></tr>
-        <tr><th>1일 평균임금</th><td>${won(r.avgDaily)}</td></tr>
-      </table>
-      <p class="formula">1일 평균임금 × 30일 × 재직일수 ÷ 365</p>`);
+    if (r.error) {
+      out.innerHTML = `<p class="label">날짜를 확인해 주세요</p><p class="formula">${r.error}</p>`;
+      out.hidden = false;
+      return;
+    }
+    const years = (r.serviceDays / 365).toFixed(1);
+    show({
+      label: "예상 퇴직금 (세전)",
+      amount: r.amount,
+      badges: r.eligible
+        ? [["ok", "퇴직금 대상"], ["", `근속 약 ${years}년`]]
+        : [["warn", "1년 미만 근무"], ["", `${r.serviceDays}일 근무`]],
+      rows: [
+        ["재직 일수", `${fmt(r.serviceDays)}일`],
+        ["3개월 임금 총액", won(r.wageTotal)],
+        ["3개월 일수", `${r.periodDays}일`],
+        ["1일 평균임금", won(r.avgDaily)],
+      ],
+      note: r.eligible
+        ? "1일 평균임금 × 30일 × 재직일수 ÷ 365"
+        : "1년 미만 근무는 법정 퇴직금 대상이 아닐 수 있어요. 위 금액은 참고용입니다.",
+      next: ["ue", "실업급여도 계산해 보기"],
+    });
   });
 
-  document.getElementById("ue-form").addEventListener("submit", (e) => {
+  document.getElementById("ue").addEventListener("submit", (e) => {
     e.preventDefault();
     const f = e.target.elements;
     const r = QuitCalc.unemployment({
@@ -62,16 +100,21 @@
       disabled: f.disabled.checked,
       dailyHours: Number(f.hours.value) || 8,
     });
-    const note = r.capped === "upper" ? "상한액이 적용되었습니다." : r.capped === "lower" ? "하한액이 적용되었습니다." : "";
-    show(document.getElementById("ue-result"), `
-      <p class="label">예상 실업급여 총액</p>
-      <p class="big">${won(r.total)}</p>
-      <table>
-        <tr><th>하루 지급액</th><td>${won(r.daily)}</td></tr>
-        <tr><th>받는 기간</th><td>${r.days}일</td></tr>
-        <tr><th>한 달(30일) 기준</th><td>${won(r.monthly)}</td></tr>
-        <tr><th>1일 평균임금</th><td>${won(r.avgDaily)}</td></tr>
-      </table>
-      ${note ? `<p class="formula">${note}</p>` : ""}`);
+    const badges = [["ok", `${r.days}일 동안`]];
+    if (r.capped === "upper") badges.push(["", "상한액 적용"]);
+    if (r.capped === "lower") badges.push(["", "하한액 적용"]);
+    show({
+      label: "예상 실업급여 총액",
+      amount: r.total,
+      badges,
+      rows: [
+        ["하루 지급액", won(r.daily)],
+        ["한 달(30일) 기준", won(r.monthly)],
+        ["받는 기간", `${r.days}일`],
+        ["1일 평균임금", won(r.avgDaily)],
+      ],
+      note: "비자발적 퇴사이고 고용보험 180일 이상일 때 받을 수 있어요.",
+      next: ["sev", "퇴직금도 계산해 보기"],
+    });
   });
 })();
