@@ -1,0 +1,61 @@
+name: Shorts - 검수 후 업로드
+
+on:
+  issues:
+    types: [labeled]
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  upload:
+    if: github.event.label.name == 'approved' && contains(github.event.issue.labels.*.name, 'review')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: 도구 설치
+        run: pip install -r shorts/requirements.txt
+      - name: 영상 가져오기
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BODY: ${{ github.event.issue.body }}
+        run: |
+          ID=$(printf '%s' "$BODY" | grep -oE 'short-id: [0-9-]+' | head -1 | cut -d' ' -f2)
+          [ -n "$ID" ] || { echo "영상 ID를 못 찾음"; exit 1; }
+          echo "ID=$ID" >> "$GITHUB_ENV"
+          gh release download "short-$ID" -D out
+      - name: 유튜브 업로드
+        env:
+          YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
+          YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
+          YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
+          YT_PRIVACY: ${{ vars.YT_PRIVACY || 'scheduled' }}
+          PUBLISH_HOUR_KST: ${{ vars.PUBLISH_HOUR_KST || '18' }}
+        run: python -m shorts upload --video "out/$ID.mp4" --meta "out/$ID.json" | tee up.log
+      - name: 결과 남기고 닫기
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NUM: ${{ github.event.issue.number }}
+        run: |
+          gh issue comment "$NUM" --body "✅ $(grep '업로드 완료' up.log)"
+          gh issue close "$NUM"
+
+  reject:
+    if: github.event.label.name == 'rejected' && contains(github.event.issue.labels.*.name, 'review')
+    runs-on: ubuntu-latest
+    steps:
+      - name: 영상 삭제하고 닫기
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          BODY: ${{ github.event.issue.body }}
+          NUM: ${{ github.event.issue.number }}
+        run: |
+          ID=$(printf '%s' "$BODY" | grep -oE 'short-id: [0-9-]+' | head -1 | cut -d' ' -f2)
+          [ -n "$ID" ] && gh release delete "short-$ID" --cleanup-tag -y || true
+          gh issue close "$NUM" --reason "not planned"
